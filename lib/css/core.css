@@ -1,0 +1,40 @@
+#tempCopyElement {
+    position: absolute;
+    left: -100%;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+#json-tree, #jsonInputTxtArea {
+    font-family: Consolas, monaco, monospace;
+}
+
+#jsonInputTxtArea {
+    font-size: small;
+}
+
+.propNameHeader {
+    cursor: default;
+}
+
+.propName {
+    cursor: pointer;
+}
+
+#expandUpToLevelContainer {
+    position: absolute;
+    right: 5px;
+    margin-top: -5px;
+}
+
+.hrDivider::before {
+    content: "OR";
+    position: absolute;
+    margin-top: -13px;
+    margin-left: 43%;
+    padding: 0px 5px;
+    background-color: white;
+    color: gray;
+}

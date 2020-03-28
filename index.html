@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSON Viewer</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="stylesheet" href="./lib/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./lib/css/core.css">
+    <link rel="stylesheet" href="./lib/css/fa/css/all.css" />
+    <script src="./lib/js/jquery-3.2.1-slim.min.js"></script>
+    <script src="./lib/js/popper.min.js"></script>
+    <script src="./lib/js/bootstrap.min.js"></script>
+    <script src="./lib/js/angular.min.js"></script>
+    <script src="./lib/js/core.js"></script>
+</head>
+<body ng-app="jsonViewerApp" ng-controller="viewController">
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">
+         { } JSON Viewer
+        </a>
+    </nav>
+    <div class="container-fluid mt-2">
+        <div class="row">
+            <div class="col-md-4 px-1">
+                <div class="card border-primary">
+					<div class="card-header border-primary">
+                        <strong>Select Json File</strong>
+                        <div class="float-right">
+                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                ng-click="clearJsonFile()"
+                                tooltip
+                                data-toggle="tooltip" data-placement="top" 
+                                title="Clear the selected file">Clear</button>
+                        </div>
+                    </div>
+  					<div class="card-body pb-0">
+  						<div class="">
+				  			<form>
+							  <div class="form-group">
+							    <input type="file" class="form-control" id="ulJsonFile" 
+							    	aria-describedby="ulJsonFileHelp" 
+							    	placeholder="Select Json File"
+							    	data-on-upload-json-change="processUploadedJSONFile($fileContent, $file, $err)" 
+							    	>
+							    <small id="ulJsonFileHelp" class="form-text text-muted">Please select a JSON file to view it.</small>
+							  </div>
+						    </form>
+				  		</div>
+  					</div>
+                </div>
+                <div class="border-top my-3 hrDivider"></div>
+                <div class="card border-primary">
+                    <div class="card-header border-primary">
+                        <strong>Type or paste your Json data</strong>
+                        <div class="float-right">
+                            <button type="button" class="btn btn-outline-primary btn-sm" 
+                                ng-click="viewJson()"
+                                tooltip
+                                data-toggle="tooltip" data-placement="top" 
+                                title="View this Json">View</button>
+                        </div>
+                    </div>
+                    <div class="card-body p-1" style="min-height: 80vh;">
+                        <div class="input-group">
+                            <textarea class="form-control" id="jsonInputTxtArea" ng-model="originalJsonData" style="min-height: 80vh;"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8 px-1">
+                <div class="card border-success">
+                    <div class="card-header border-success">
+                        <span ng-show="!validJsonData"><strong>Json View</strong></span>
+                        <ul class="nav nav-tabs card-header-tabs" 
+                            id="tab-list" role="tablist"
+                            ng-show="validJsonData">
+                            <li class="nav-item">
+                                <a class="nav-link" ng-class="{'active bold': isShowTree}"
+                                    href="javascript:void(0)" role="tab"  
+                                    ng-click="showTree()">Json Tree</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" ng-class="{'active bold': isShowStructure}" 
+                                    href="javascript:void(0)" role="tab"
+                                    ng-click="showStructure()">Json Structure</a>
+                            </li>
+                            <div class="float-right" id="expandUpToLevelContainer" ng-if="validJsonData">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                      <label class="input-group-text" for="expandUpToLevel">Expand Upto Level</label>
+                                    </div>
+                                    <select class="custom-select" id="expandUpToLevel" 
+                                        ng-model="defaultExpandUpToLevel"
+                                        ng-change="changeExpandLevel(defaultExpandUpToLevel)"
+                                        ng-options="n for n in range(1,maxExpandUpToLevel)">
+                                    </select>
+                                </div>
+                            </div>
+                        </ul>
+                    </div>
+                    <div class="card-body p-1" style="min-height: 80vh;">
+                        <div ng-if="!validJsonData && errMsg">
+                            <div class="alert alert-danger" role="alert">
+                                {{errMsg}}
+                            </div>
+                        </div>
+                        <div ng-if="isParsing">
+                            <div class="alert alert-info" role="alert">
+                                Please wait...!! Parsing your data...
+                            </div>
+                        </div>
+                        <div class="tab-content mt-3" ng-show="validJsonData">
+                            <div class="tab-pane" id="json-tree" ng-class="{'active': isShowTree}"
+                                role="tabpanel">
+                                <div id="rootJson">
+                                    <div ng-repeat="key in getKeys(jsonData)"
+                                        ng-include="'jsonViewTree'"
+                                        ng-init="item = { key: key, value: jsonData[key], level: 1 }"></div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="json-structure" ng-class="{'active': isShowStructure}"
+                                role="tabpanel">
+                                <div class="float-right" style="position: absolute; right: 5px; margin-top: -10px;">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                        tooltip
+                                        data-toggle="tooltip" data-placement="top" 
+                                        title="Copy To Clipboard"
+                                        ng-click="copyStructuredJson()">Copy</button>
+                                </div>
+                                <pre class="my-0" id="json-structure-data">{{getFormattedJsonData()}}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="row">
+              <div class="col-md-12">
+                <div class="text-center text-muted" style="font-size: small;">JSON Viewer - by AD</div>
+              </div>
+          </div>
+    </div>
+</body>
+<script type="text/ng-template" id="jsonViewTree">
+    <div class="card py-0">
+        <div class="card-header py-1 px-0 pl-4 propNameHeader" 
+            ng-init="item.isExpanded = item.level >= defaultExpandUpToLevel ? false : true"
+            ng-style="{'border-bottom' : isSimpleType(item.value) ? '0px' : '1px solid rgba(0,0,0, 0.125)'}">
+            <span id="{{item.key + '-' + item.level}}" class="propName"
+                tooltip
+                data-toggle="tooltip" data-placement="top" 
+                title="Name of Property"
+                ng-click="item.isExpanded = !item.isExpanded">
+                <i ng-class="{'fas fa-angle-right': !item.isExpanded, 'fas fa-angle-down': item.isExpanded}"
+                    ng-hide="isSimpleType(item.value)"></i>
+                <strong>{{ item.key }}</strong>
+            </span>
+            <span ng-class="{'badge badge-pill badge-info' : isSimpleType(item.value),
+                'badge badge-pill badge-success' : isArrayType(item.value),
+                'badge badge-pill badge-warning' : isObjectType(item.value),
+                'badge badge-pill badge-danger' : getType(item.value) == 'null'}"
+                tooltip
+                data-toggle="tooltip" data-placement="top" 
+                title="Type of Property">{{ getType(item.value) }}
+            </span>
+            <span class="badge badge-pill badge-secondary"
+                tooltip
+                data-toggle="tooltip" data-placement="top" 
+                title="Hierarchy Level of Property">{{item.level}}
+            </span>
+            <span ng-if="isSimpleType(item.value)"><strong> : </strong>{{ item.value + "" }}</span>
+            <span ng-if="isObjectType(item.value) && getKeys(item.value).length == 0"><strong> : </strong>{}</span>
+            <span ng-if="isArrayType(item.value) && item.value.length == 0"><strong> : </strong>[]</span>
+        </div>
+        <div class="card-body py-1 px-0 pl-4"
+            ng-if="isObjectType(item.value) || isArrayType(item.value)"
+            ng-show="item.isExpanded">
+            <div class="mb-1" 
+                ng-repeat="key in getKeys(item.value)"
+                ng-include="'jsonViewTree'"
+                ng-init="item = { key: key, value: item.value[key], level: item.level + 1 }"></div>
+        </div>
+    </div>
+</script>
+</html>
